@@ -106,4 +106,4 @@ app.mount("/static", StaticFiles(directory=_static), name="static")
 
 @app.get("/")
 def index():
-    return FileResponse(os.path.join(_static, "index.html"))
+    return FileResponse(os.path.join(_static, "index.html"), headers={"Cache-Control": "no-store"})

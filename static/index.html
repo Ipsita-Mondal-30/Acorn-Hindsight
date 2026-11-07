@@ -63,6 +63,7 @@ textarea,input,select{width:100%;font:inherit;color:var(--ink);background:var(--
 <div class="toast" id="toast"></div>
 <script>
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const md=s=>esc(s).replace(/^#{1,6}\s*(.+)$/gm,'<b>$1</b>').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^\s*[*-]\s+/gm,'• ');
 const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3500)};
 async function api(p,o){const r=await fetch(p,o&&{method:o.method||'POST',headers:{'content-type':'application/json'},body:JSON.stringify(o.body||{})});if(!r.ok)throw new Error((await r.text()).slice(0,200));return r.json()}
 const busy=async(b,fn)=>{b.disabled=true;try{return await fn()}catch(e){toast('Error: '+e.message)}finally{b.disabled=false}};
@@ -78,7 +79,7 @@ async function loadItems(){
 }
 $('#items').addEventListener('click',async e=>{
   const b=e.target.closest('button');if(!b)return;const id=b.dataset.id,a=b.dataset.a;
-  if(a==='brief')return busy(b,async()=>{const r=await api('/api/items/'+id+'/brief');$('#brief-'+id).innerHTML=`<div class="col mem" style="margin-top:8px">${esc(r.text)}${facts(r.facts)}</div>`});
+  if(a==='brief')return busy(b,async()=>{const r=await api('/api/items/'+id+'/brief');$('#brief-'+id).innerHTML=`<div class="col mem" style="margin-top:8px">${md(r.text)}${facts(r.facts)}</div>`});
   await busy(b,async()=>{await api('/api/items/'+id+'/resolve',{body:{status:a}});toast('Remembered: you '+a+' it. Acorn will weigh this next time.');loadItems()});
 });
 $('#save').onclick=e=>busy(e.target,async()=>{
@@ -86,12 +87,12 @@ $('#save').onclick=e=>busy(e.target,async()=>{
   ['#text','#title','#why'].forEach(s=>$(s).value='');toast('Saved and retained in Hindsight.');loadItems()});
 $('#load').onclick=e=>busy(e.target,async()=>{toast('Retaining 5 weeks of history… this can take a minute.');const r=await api('/api/demo/load',{});toast('Retained '+r.retained+' memories.');loadItems()});
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('#today').hidden=b.dataset.t!=='today';$('#ask').hidden=b.dataset.t!=='ask'});
-$('#runToday').onclick=e=>busy(e.target,async()=>{const r=await api('/api/today');$('#todayOut').innerHTML=esc(r.text)+facts(r.facts)});
+$('#runToday').onclick=e=>busy(e.target,async()=>{const r=await api('/api/today');$('#todayOut').innerHTML=md(r.text)+facts(r.facts)});
 const samples=["Should I apply to the Hexagon Pay job or skip it?","Which of my saved recipes will I actually cook?","Should I buy the vertical mouse?","What do I usually do with long articles I save?"];
 $('#chips').innerHTML=samples.map(s=>`<button>${esc(s)}</button>`).join('');
 $('#chips').onclick=e=>{if(e.target.tagName==='BUTTON')$('#q').value=e.target.textContent};
 $('#runAsk').onclick=e=>busy(e.target,async()=>{const r=await api('/api/ask',{body:{question:$('#q').value}});
-  $('#cmp').innerHTML=`<div class="col no"><h3>Without memory</h3><div class="ans">${esc(r.without_memory)}</div></div><div class="col mem"><h3>With Hindsight memory</h3><div class="ans">${esc(r.with_memory.text)}</div>${facts(r.with_memory.facts)}</div>`});
+  $('#cmp').innerHTML=`<div class="col no"><h3>Without memory</h3><div class="ans">${md(r.without_memory)}</div></div><div class="col mem"><h3>With Hindsight memory</h3><div class="ans">${md(r.with_memory.text)}</div>${facts(r.with_memory.facts)}</div>`});
 loadItems().catch(e=>toast('Backend error: '+e.message));
 </script>
 </body>
