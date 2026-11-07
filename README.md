@@ -1,6 +1,6 @@
 # Acorn
 
-Memory-first follow-through agent. You save things (jobs, recipes, articles, documents, voice-note ideas). Acorn
+Memory-first follow-through agent for work: the leads, job applications, articles, contracts and ideas you save and mean to get to. (The demo data also has a few personal items to show it works across kinds.) Acorn
 remembers *what* you saved, *why*, and, most importantly, **what you actually did with it**. It uses that history
 to tell you what deserves attention today and to answer "should I bother with this?" from your own track record.
 

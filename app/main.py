@@ -82,7 +82,7 @@ def today(mem: Memory = Depends(get_memory)):
 
 @app.post("/api/ask")
 def ask(body: AskIn, mem: Memory = Depends(get_memory)):
-    return agent.ask(mem, body.question)
+    return agent.ask(mem, body.question, USER)
 
 
 @app.get("/api/recall")

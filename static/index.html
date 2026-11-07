@@ -78,6 +78,8 @@ label.pf{display:block;margin-bottom:6px;color:var(--mute);font-size:9px}
 .fact{font-size:19px;color:#4b4535;padding:2px 0 2px 14px;position:relative;line-height:1.05}
 .fact:before{content:"";position:absolute;left:0;top:7px;width:7px;height:7px;background:var(--blue)}
 .fact i{font-style:normal;color:var(--green-d);margin-right:6px}
+.try{margin:0 0 12px;font-size:9px;line-height:1.7}
+.cmp .wide{grid-column:1/-1}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 14px}
 
 /* pixel loading bar (image 2) */
@@ -107,7 +109,7 @@ body.busy #loading{transform:translateX(-50%)}
 <body>
 <header>
   <div class="brand"><span id="logo" class="bob"></span><h1>ACORN<span>.</span></h1></div>
-  <div class="tag-line">remembers what you save, learns what you actually do</div>
+  <div class="tag-line">follow-through memory for work: leads, applications, reading, contracts. It learns what you actually do.</div>
   <div class="sp"></div>
   <button class="p" id="load">LOAD DEMO DATA</button>
   <span class="deco twinkle" id="d1" style="left:46%;top:8px"></span>
@@ -140,6 +142,7 @@ body.busy #loading{transform:translateX(-50%)}
       <div class="tabs"><button data-t="today" class="on">TODAY</button><button data-t="ask">ASK · MEMORY VS NONE</button></div>
       <div id="today"><button class="p" id="runToday">WHAT NEEDS ME TODAY?</button><div id="todayOut" class="ans out"></div></div>
       <div id="ask" hidden>
+        <div class="hint try pf">TRY IT: ASK &rarr; MARK AN ITEM ACTED / IGNORED &rarr; ASK AGAIN. WATCH THE ANSWER CHANGE.</div>
         <input id="q" placeholder="Ask anything about what you've saved…">
         <div class="chips" id="chips"></div>
         <button class="p" id="runAsk">ASK BOTH</button>
@@ -199,13 +202,18 @@ $('#save').onclick=e=>busy(e.target,async()=>{
 $('#load').onclick=e=>busy(e.target,async()=>{toast('Retaining 5 weeks of history. Hang tight…');const r=await api('/api/demo/load',{});toast('Retained '+r.retained+' memories.');loadItems()});
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('#today').hidden=b.dataset.t!=='today';$('#ask').hidden=b.dataset.t!=='ask'});
 $('#runToday').onclick=e=>busy(e.target,async()=>{const r=await api('/api/today');$('#todayOut').innerHTML=md(r.text)+facts(r.facts)});
-const samples=["Should I apply to the Hexagon Pay job or skip it?","Which of my saved recipes will I actually cook?","Should I buy the vertical mouse?","What do I usually do with long articles I save?"];
+const samples=["Should I apply to the Hexagon Pay job or skip it?","Which saved articles will I actually read?","Which of my open deadlines am I most likely to miss?","Should I buy the vertical mouse?"];
 $('#chips').innerHTML=samples.map(s=>`<button class="sm">${esc(s)}</button>`).join('');
 $('#chips').onclick=e=>{if(e.target.tagName==='BUTTON')$('#q').value=e.target.textContent};
-$('#runAsk').onclick=e=>busy(e.target,async()=>{const r=await api('/api/ask',{body:{question:$('#q').value}});
+const prevAsk={};
+$('#runAsk').onclick=e=>busy(e.target,async()=>{const q=$('#q').value;const key=q.trim().toLowerCase();const before=prevAsk[key];
+  const r=await api('/api/ask',{body:{question:q}});
+  const mins=before?Math.max(1,Math.round((Date.now()-before.t)/60000)):0;
   $('#cmp').innerHTML=
+   (before?`<div class="wide">${winHtml('','earlier_answer.txt',`<div class="head">${px('sparkle',4)}<span class="pf">SAME QUESTION, ${mins} MIN AGO</span></div><div class="ans">${md(before.text)}</div>`)}</div>`:'')+
    winHtml('bad','no_memory.app',`<div class="head">${px('hex',3)}<span class="pf">NO MEMORY</span></div><div class="ans">${md(r.without_memory)}</div>`)+
-   winHtml('green','hindsight.app',`<div class="head">${px('coin',4)}<span class="pf">WITH HINDSIGHT</span></div><div class="ans">${md(r.with_memory.text)}</div>${facts(r.with_memory.facts)}`)});
+   winHtml('green','hindsight.app',`<div class="head">${px('coin',4)}<span class="pf">${before?'AFTER WHAT YOU DID SINCE':'WITH HINDSIGHT'}</span></div><div class="ans">${md(r.with_memory.text)}</div>${facts(r.with_memory.facts)}`);
+  prevAsk[key]={text:r.with_memory.text,t:Date.now()}});
 loadItems().catch(e=>toast('Backend error: '+e.message,true));
 </script>
 </body>

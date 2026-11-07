@@ -75,3 +75,13 @@ def test_brief_unknown_item(client):
 
 def test_index_served(client):
     assert "Acorn" in client.get("/").text
+
+
+def test_ask_passes_authoritative_status_to_memory(client, mem, monkeypatch):
+    monkeypatch.setattr("app.llm.answer_without_memory", lambda q: "generic")
+    a = client.post("/api/items", json={"kind": "job", "title": "Done job", "text": "t"}).json()
+    client.post("/api/items", json={"kind": "job", "title": "Pending job", "text": "t"})
+    client.post(f"/api/items/{a['id']}/resolve", json={"status": "acted"})
+    client.post("/api/ask", json={"question": "what is pending?"})
+    ctx = mem.reflections[-1][1]
+    assert "OPEN: Pending job (job)" in ctx and "ACTED: Done job (job)" in ctx
