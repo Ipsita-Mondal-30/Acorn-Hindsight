@@ -32,6 +32,9 @@ The demo history has 14 past incidents with recurring patterns (bad deploys fixe
 outages where rolling back wastes time, DB pool exhaustion) and 4 live incidents to triage. Load it with
 **LOAD INCIDENT HISTORY** (about 18 memories).
 
+## OpenClaw
+An OpenClaw agent can read the same bank through the official Hindsight plugin. Steps and config: [docs/openclaw.md](docs/openclaw.md).
+
 ## Run
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
