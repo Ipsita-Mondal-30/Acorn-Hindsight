@@ -117,3 +117,6 @@ app/main.py     FastAPI routes
 static/         Plain HTML/CSS/JS pixel UI (no build step)
 openclaw/, docs/openclaw.md   OpenClaw plugin config and setup notes
 ```
+
+## License
+MIT, see [LICENSE](LICENSE).
