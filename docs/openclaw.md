@@ -4,18 +4,28 @@ Pager Memory's incident history lives in the Hindsight bank `acorn-demo-pager`. 
 [Hindsight OpenClaw plugin](https://hindsight.vectorize.io/sdks/integrations/openclaw) lets an OpenClaw agent read the
 same bank, so you can ask the agent about an outage in chat and it answers from your team's real history.
 
-> Status (verified on this machine): OpenClaw 2026.11.1 is installed under Node 24, the Hindsight plugin is installed
-> and the gateway logs `initialized (mode: external API, bank: acorn-demo-pager, autoRecall: true, autoRetain: false)`.
-> **Not yet working end to end:** the agent's first model call fails on Groq's free tier (see "Model limit" below).
+> Status: **verified end to end on this machine.** OpenClaw 2026.11.1 on Node 24, the Hindsight plugin on the
+> `acorn-demo-pager` bank, and the model `google/gemini-3.6-flash`. Asked "Payments webhooks are returning 504s from the
+> provider. Should I roll back?", the agent answered "No, do not roll back", citing INC-203 (rolling back wasted 20
+> minutes) and the RB-19 fallback queue from INC-203 and INC-210. The plugin log shows
+> `injecting 61 memories into context (bank: acorn-demo-pager)`.
 
-## Model limit (Groq free tier)
-Groq's free tier caps `openai/gpt-oss-120b` at **8,000 tokens per request**. OpenClaw's prompt (system prompt, tool
-definitions, recalled memory) is about 8,100-8,900 tokens even after slimming, so every turn is rejected with 413 and
-OpenClaw reports it as "Context overflow". Slimming applied so far: workspace injection off, skills block capped,
-tool-heavy plugins disabled, recall-only memory mode, recall budget 250. It got from 8,967 to roughly 8,150-8,250
-tokens, which is still over. Fix: switch OpenClaw to a model with a larger limit (for example a Google Gemini
-free key via `openclaw configure`) or Groq's Dev tier, then restore full capability:
-`openclaw config patch --file openclaw/full-context.patch.json5 && openclaw daemon restart`.
+## Gotchas we hit (in order)
+1. **Node must be 24.16+** (not 25). With Homebrew: `brew install node@24` and put it first on `PATH` in that terminal.
+2. **Groq's free tier caps requests at 8,000 tokens**, and OpenClaw's prompt is about 8,200. Every turn fails with
+   "Context overflow". Use a larger-limit model (we used Google Gemini). Model notes: `gemini-2.5-flash` is no longer
+   offered to new accounts, `gemini-3.8-flash` returned 503 "high demand" (OpenClaw silently retries 8 times, which looks
+   like a hang), `gemini-3.6-flash` worked. Set it with `openclaw models set google/gemini-3.6-flash`.
+3. **Allow the plugin to read conversations**, or its recall hooks are blocked:
+   `openclaw config set plugins.entries.hindsight-openclaw.hooks.allowConversationAccess true` (then restart the gateway).
+4. **Config changes show "persisted but not applied"**: run `openclaw daemon restart` and they take effect.
+5. **Recall only runs on sessions that come from a real chat surface** (dashboard, terminal chat, a channel). A bare
+   `openclaw agent --message ...` has no message provider and the plugin logs "Skipping recall". Use
+   `--session-key agent:acorn:main`, or just use the dashboard.
+6. **After your laptop sleeps, DNS can be down for a moment**: recall fails with "fetch failed" and the model with
+   `ENOTFOUND`. Retry after a few seconds.
+7. The installer warns the plugin is outside ClawHub's reviewed registry and needs `--force`. We checked the package
+   first: `@vectorize-io` publisher, repo `vectorize-io/hindsight`, no install scripts.
 
 ## 1. Install OpenClaw (needs Node 24.16+)
 ```bash
@@ -26,7 +36,7 @@ openclaw onboard --install-daemon                # interactive: pick a model pro
 
 ## 2. Install the Hindsight plugin
 ```bash
-openclaw plugins install @vectorize-io/hindsight-openclaw
+openclaw plugins install @vectorize-io/hindsight-openclaw --force   # --force after reviewing the package, see gotcha 7
 ```
 
 ## 3. Point it at the Acorn bank
@@ -37,7 +47,8 @@ openclaw config set plugins.entries.hindsight-openclaw.config.hindsightApiToken 
   --ref-source env --ref-provider default --ref-id HINDSIGHT_API_TOKEN
 ```
 Then merge [`openclaw/openclaw.json.snippet`](../openclaw/openclaw.json.snippet) into `~/.openclaw/openclaw.json`
-(`hindsightApiUrl`, `dynamicBankId: false`, `bankId: acorn-demo-pager`, `memoryMode: hybrid`).
+(`hindsightApiUrl`, `dynamicBankId: false`, `bankId: acorn-demo-pager`, `memoryMode: hybrid`, and the
+`allowConversationAccess` hook permission). Or apply it with `openclaw config patch --file ...` and `openclaw daemon restart`.
 
 `autoRetain` is `false` so chat turns do not pollute the seeded incident history. Set it to `true` if you want the
 agent to retain what you tell it (for example, declaring a new incident in chat).
