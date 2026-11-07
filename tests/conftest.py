@@ -35,5 +35,6 @@ def mem(tmp_path, monkeypatch):
 @pytest.fixture
 def client(mem):
     main.app.dependency_overrides[main.get_memory] = lambda: mem
+    main.app.dependency_overrides[main.get_pager_memory] = lambda: mem
     yield TestClient(main.app)
     main.app.dependency_overrides.clear()

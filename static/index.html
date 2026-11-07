@@ -6,116 +6,14 @@
 <title>Acorn</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
-<style>
-:root{--cream:#fdf6e3;--ink:#1a1a1a;--paper:#fffdf5;--bar:#c9d3e6;--yellow:#f3f08a;--green:#7fb35a;--green-d:#4f8a3a;--sky:#bfe3ff;--red:#ff6b5e;--blue:#3a86ff;--gold:#e8a33d;--mute:#6b6454;--shadow:5px 5px 0 var(--ink)}
-*{box-sizing:border-box}
-html{background:var(--cream)}
-body{margin:0;min-height:100vh;color:var(--ink);font:22px/1.15 "VT323",ui-monospace,monospace;
-  background-color:var(--cream);background-image:radial-gradient(#e9dfc2 1.5px,transparent 1.5px);background-size:22px 22px}
-.px{image-rendering:pixelated;shape-rendering:crispEdges;display:block}
-.pf{font-family:"Press Start 2P",monospace;font-size:11px;letter-spacing:.02em;line-height:1.5}
-
-/* header */
-header{position:relative;display:flex;align-items:center;gap:16px;padding:18px 24px;max-width:1240px;margin:0 auto;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:12px}
-.brand h1{margin:0;font-family:"Press Start 2P",monospace;font-size:26px;text-shadow:3px 3px 0 var(--yellow)}
-.brand h1 span{color:var(--green-d)}
-.tag-line{color:var(--mute);font-size:20px}
-.sp{flex:1}
-.deco{position:absolute;pointer-events:none}
-
-/* chunky buttons */
-button{font:inherit;font-size:20px;color:var(--ink);background:var(--paper);border:3px solid var(--ink);border-radius:8px;padding:5px 12px 4px;cursor:pointer;
-  box-shadow:3px 3px 0 var(--ink);transition:transform .06s,box-shadow .06s}
-button:hover{background:var(--yellow)}
-button:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
-button:disabled{opacity:.55;cursor:progress}
-button.p{background:var(--green);font-family:"Press Start 2P",monospace;font-size:11px;padding:10px 14px;color:#fff;text-shadow:1px 1px 0 var(--ink);letter-spacing:.04em}
-button.p:hover{background:#8fc56a}
-button.sm{font-size:18px;padding:2px 9px 1px;box-shadow:2px 2px 0 var(--ink)}
-button.ok{background:#d7f0c4}button.no{background:#ffd5d0}
-
-/* windows (image 1 chrome) */
-main{display:grid;grid-template-columns:minmax(300px,400px) 1fr;gap:26px;padding:10px 24px 90px;max-width:1240px;margin:0 auto;align-items:start}
-@media(max-width:880px){main{grid-template-columns:1fr}}
-.stack{display:grid;gap:26px}
-.win{background:var(--paper);border:3px solid var(--ink);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
-.win>.bar{display:flex;align-items:center;gap:6px;padding:7px 10px;background:var(--bar);border-bottom:3px solid var(--ink)}
-.dot{width:14px;height:14px;border:2.5px solid var(--ink);border-radius:50%;background:var(--paper)}.dot.r{background:var(--red)}
-.bar .pf{margin-left:8px;font-size:10px}
-.win.green>.bar{background:#b9e0a0}.win.bad>.bar{background:#f6c9c3}
-.body{padding:14px}
-
-/* form */
-textarea,input,select{width:100%;font:inherit;font-size:21px;color:var(--ink);background:#fff;border:3px solid var(--ink);border-radius:8px;padding:6px 9px;margin-bottom:10px;outline:none}
-textarea:focus,input:focus,select:focus{background:#fffbd6}
-.row{display:flex;gap:10px}.row>*{flex:1}
-label.pf{display:block;margin-bottom:6px;color:var(--mute);font-size:9px}
-
-/* inbox files */
-.item{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:12px 0;border-top:3px dashed #d9cfae}
-.item:first-child{border-top:0;padding-top:0}
-.item .t{font-size:23px;line-height:1.05}
-.chip{display:inline-block;font-size:17px;padding:0 8px;border:2.5px solid var(--ink);border-radius:99px;background:var(--sky);margin-right:6px;vertical-align:middle}
-.chip.open{background:var(--yellow)}.chip.acted{background:#c4ecab}.chip.ignored{background:#ffc9c2}
-.meta{color:var(--mute);font-size:19px}
-.acts{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
-.hint{color:var(--mute)}
-
-/* tabs */
-.tabs{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
-.tabs button.on{background:var(--ink);color:var(--cream);box-shadow:3px 3px 0 var(--gold)}
-
-/* answers */
-.ans{white-space:pre-wrap;font-size:23px;line-height:1.12}
-.out{margin-top:16px}
-.cmp{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:18px}
-@media(max-width:760px){.cmp{grid-template-columns:1fr}}
-.cmp .win{box-shadow:5px 5px 0 var(--ink)}
-.head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.facts{margin-top:12px;border-top:3px dashed #d9cfae;padding-top:8px}
-.facts .pf{font-size:9px;color:var(--mute);margin-bottom:6px}
-.fact{font-size:19px;color:#4b4535;padding:2px 0 2px 14px;position:relative;line-height:1.05}
-.fact:before{content:"";position:absolute;left:0;top:7px;width:7px;height:7px;background:var(--blue)}
-.fact i{font-style:normal;color:var(--green-d);margin-right:6px}
-.try{margin:0 0 12px;font-size:9px;line-height:1.7}
-.cmp .wide{grid-column:1/-1}
-.ghost{margin:6px 0 2px;font-size:19px}
-.chip.gp{background:#e6dcff}.chip.right{background:#c4ecab}.chip.wrong{background:#ffc9c2}
-.score{display:flex;align-items:center;gap:14px;flex-wrap:wrap;border:3px solid var(--ink);border-radius:10px;background:#f4efff;padding:10px 12px;margin-bottom:16px;box-shadow:3px 3px 0 var(--ink)}
-.sbar{display:flex;gap:3px;border:3px solid var(--ink);padding:3px;background:#fff;width:190px}.sbar i{flex:1;height:14px;background:#e6e1cc}.sbar i.on{background:#8fd35d}
-.score .big{font-family:"Press Start 2P",monospace;font-size:14px}
-.chips{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 14px}
-
-/* pixel loading bar (image 2) */
-#loading{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(140%);transition:transform .2s;z-index:9;
-  background:var(--paper);border:3px solid var(--ink);border-radius:10px;box-shadow:var(--shadow);padding:10px 16px;text-align:center}
-body.busy #loading{transform:translateX(-50%)}
-#loading .pf{margin-bottom:8px;font-size:10px}
-.lbar{display:flex;gap:3px;border:3px solid var(--ink);padding:3px;background:#fff;width:230px}
-.lbar i{flex:1;height:14px;background:#e6e1cc}
-.lbar i{animation:fill 1.2s steps(1) infinite}
-@keyframes fill{0%,100%{background:#e6e1cc}}
-.lbar i:nth-child(1){animation-name:f1}.lbar i:nth-child(2){animation-name:f2}.lbar i:nth-child(3){animation-name:f3}.lbar i:nth-child(4){animation-name:f4}
-.lbar i:nth-child(5){animation-name:f5}.lbar i:nth-child(6){animation-name:f6}.lbar i:nth-child(7){animation-name:f7}.lbar i:nth-child(8){animation-name:f8}
-@keyframes f1{0%{background:#e6e1cc}12%,100%{background:#8fd35d}}@keyframes f2{0%,12%{background:#e6e1cc}25%,100%{background:#8fd35d}}
-@keyframes f3{0%,25%{background:#e6e1cc}37%,100%{background:#8fd35d}}@keyframes f4{0%,37%{background:#e6e1cc}50%,100%{background:#8fd35d}}
-@keyframes f5{0%,50%{background:#e6e1cc}62%,100%{background:#8fd35d}}@keyframes f6{0%,62%{background:#e6e1cc}75%,100%{background:#8fd35d}}
-@keyframes f7{0%,75%{background:#e6e1cc}87%,100%{background:#8fd35d}}@keyframes f8{0%,87%{background:#e6e1cc}99%,100%{background:#8fd35d}}
-
-/* toast (error window, image 1) */
-#toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:10;display:none;max-width:min(92vw,520px)}
-#toast .win{box-shadow:6px 6px 0 var(--ink)}
-#toast .body{display:flex;gap:12px;align-items:center}
-.bob{animation:bob 1.6s steps(2) infinite}@keyframes bob{50%{transform:translateY(-3px)}}
-.twinkle{animation:tw 1.8s steps(2) infinite}@keyframes tw{50%{opacity:.25}}
-</style>
+<link rel="stylesheet" href="/static/common.css">
 </head>
 <body>
 <header>
   <div class="brand"><span id="logo" class="bob"></span><h1>ACORN<span>.</span></h1></div>
   <div class="tag-line">follow-through memory for work: leads, applications, reading, contracts. It learns what you actually do.</div>
   <div class="sp"></div>
+  <div class="lens"><a class="btn on" href="/">FOLLOW-THROUGH</a><a class="btn" href="/pager">PAGER MEMORY</a></div>
   <button class="p" id="load">LOAD DEMO DATA</button>
   <span class="deco twinkle" id="d1" style="left:46%;top:8px"></span>
   <span class="deco twinkle" id="d2" style="right:250px;top:60px;animation-delay:.6s"></span>
@@ -161,34 +59,8 @@ body.busy #loading{transform:translateX(-50%)}
 <div id="loading"><div class="pf">LOADING</div><div class="lbar"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
 <div id="toast"></div>
 
+<script src="/static/common.js"></script>
 <script>
-// ---- pixel sprites: grid strings -> crisp SVG ----
-const PAL={k:'#1a1a1a',B:'#7a4118',b:'#a8602a',t:'#e8b366',w:'#fff3c9',y:'#f3f08a',Y:'#dfd85f',o:'#e8a33d',g:'#5aa13a',G:'#7fcf55',u:'#3a86ff',l:'#9bd0ff',r:'#ff6b5e',W:'#ffffff',s:'#c8ccd4',m:'#7b5ea7'};
-const SPR={
-acorn:[".....kk.....","....kBBk....","..kkkkkkkk..",".kBbBbBbBBk.","kBbBbBbBbBBk","kBBBBBBBBBBk","kkkkkkkkkkkk",".kttttttttk.",".kttwttttttk",".kttttttttk.","..kttttttk..","...kttttk...","....kkkk...."],
-sparkle:["...u...","...u...","..uuu..","uulllUU".replace(/U/g,"u"),"..uuu..","...u...","...u..."],
-coin:["..kkkk..",".kyyyyyk","kyyyooyk","kyyoooyk","kyyoooyk","kyyyooyk",".kyyyyk.","..kkkk.."],
-folder:[".kkkkkk.......","kyyyyyykkkkkk.","kyyyyyyyyyyyyk","kkkkkkkkkkkkkk","kyYyYyYyYyYyYk","kYyYyYyYyYyYyk","kyYyYyYyYyYyYk","kYyYyYyYyYyYyk","kyYyYyYyYyYyYk","kkkkkkkkkkkkkk"],
-flower:["..kyyyk..",".kyyyyyk.","kyyBBByyk","kyBbbbByk","kyBbbbByk","kyyBBByyk",".kyyyyyk.","..kkgkk..","....g....","..gg.g...",".ggg.g...","...g.gg..","....ggg..","....g....","....g...."],
-ghost:["...kkkk...","..kllllk..",".kllllllk.",".klkklkklk",".klkklkklk",".klllllllk",".klllllllk",".klllllllk",".klkllklllk","..k.kk.k.."],
-hex:["...kkkkkk...","..krrrrrrk..",".krrrWWrrrk.","krrrrWWrrrrk","krrrrWWrrrrk","krrrrWWrrrrk","krrrrrrrrrrk","krrrrWWrrrrk",".krrrrrrrrk.","..kkkkkkkk.."]
-};
-function px(name,size=4){const g=SPR[name],h=g.length,w=Math.max(...g.map(r=>r.length));let r='';
-  g.forEach((row,y)=>[...row].forEach((c,x)=>{if(PAL[c])r+=`<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${PAL[c]}"/>`}));
-  return `<svg class="px" width="${w*size}" height="${h*size}" viewBox="0 0 ${w} ${h}">${r}</svg>`}
-const $=s=>document.querySelector(s);
-$('#logo').innerHTML=px('acorn',5);$('#d1').innerHTML=px('sparkle',5);$('#d2').innerHTML=px('sparkle',4);
-
-const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const md=s=>esc(s).replace(/^#{1,6}\s*(.+)$/gm,'<b>$1</b>').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^\s*[*-]\s+/gm,'▪ ');
-const winHtml=(cls,title,body)=>`<div class="win ${cls}"><div class="bar"><i class="dot r"></i><i class="dot"></i><i class="dot"></i><span class="pf">${title}</span></div><div class="body">${body}</div></div>`;
-function toast(m,err){const t=$('#toast');t.innerHTML=winHtml(err?'bad':'green',err?'error.exe':'done.app',`<span class="bob">${px(err?'hex':'coin',4)}</span><div class="ans" style="font-size:21px">${err?'<b>ERROR!</b> ':''}${esc(m)}</div>`);t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',4200)}
-let inflight=0;const setBusy=d=>{inflight+=d;document.body.classList.toggle('busy',inflight>0)};
-async function api(p,o){setBusy(1);try{const r=await fetch(p,o&&{method:o.method||'POST',headers:{'content-type':'application/json'},body:JSON.stringify(o.body||{})});if(!r.ok)throw new Error((await r.text()).slice(0,200));return await r.json()}finally{setBusy(-1)}}
-const busy=async(b,fn)=>{b.disabled=true;try{return await fn()}catch(e){toast(e.message,true)}finally{b.disabled=false}};
-const ago=iso=>{const d=Math.round((Date.now()-new Date(iso))/864e5);return d<=0?'today':d+'d ago'};
-const facts=fs=>fs&&fs.length?`<div class="facts"><div class="pf">MEMORIES USED (${fs.length})</div>${fs.slice(0,8).map(f=>`<div class="fact"><i>${esc(f.type||'fact')}</i>${esc(f.text)}</div>`).join('')}</div>`:'';
-
 const ghostHtml=i=>{const p=i.prediction;if(!p)return '';
   const guess=`<span class="chip gp">GHOST: ${p.label.toUpperCase()} ${p.confidence}%</span>`;
   const res=i.correct===true?'<span class="chip right">GHOST WAS RIGHT</span>':i.correct===false?'<span class="chip wrong">GHOST WAS WRONG</span>':'';

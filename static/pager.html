@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pager Memory</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/common.css">
+<style>
+.inc{border-top:3px dashed #d9cfae;padding:14px 0}.inc:first-child{border-top:0;padding-top:0}
+.inc .t{font-size:25px;line-height:1.05;margin:6px 0}
+.chip.sev1{background:var(--red);color:#fff}.chip.sev2{background:#ffd5a8}.chip.sev3{background:var(--sky)}
+.logs{margin:6px 0 0;padding:8px 10px;background:#1a1a1a;color:#9ff29f;border-radius:6px;font:18px/1.1 "VT323",monospace;white-space:pre-wrap;word-break:break-word}
+details summary{cursor:pointer;color:var(--mute);font-size:19px}
+.rform{margin-top:10px;padding:12px;border:3px solid var(--ink);border-radius:10px;background:#fff8e0}
+.hist{max-height:560px;overflow:auto;padding-right:4px}
+.h{padding:10px 0;border-top:3px dashed #d9cfae}.h:first-child{border-top:0;padding-top:0}
+.h .t{font-size:21px;line-height:1.05}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><span id="logo" class="bob"></span><h1>PAGER MEMORY<span>.</span></h1></div>
+  <div class="tag-line">incident response that remembers every outage, root cause and what actually fixed it</div>
+  <div class="sp"></div>
+  <div class="lens"><a class="btn" href="/">FOLLOW-THROUGH</a><a class="btn on" href="/pager">PAGER MEMORY</a></div>
+  <button class="p" id="load">LOAD INCIDENT HISTORY</button>
+  <span class="deco twinkle" id="d1" style="left:52%;top:8px"></span>
+  <span class="deco twinkle" id="d2" style="right:330px;top:60px;animation-delay:.6s"></span>
+</header>
+
+<main>
+  <div class="stack">
+    <section class="win bad">
+      <div class="bar"><i class="dot r"></i><i class="dot"></i><i class="dot"></i><span class="pf">declare_incident.exe</span></div>
+      <div class="body">
+        <label class="pf">WHAT IS BROKEN?</label>
+        <input id="title" placeholder="e.g. checkout p99 latency 4s">
+        <div class="row"><div><label class="pf">SERVICE</label><input id="service" placeholder="checkout-api"></div>
+        <div><label class="pf">SEVERITY</label><select id="sev"><option>sev1</option><option selected>sev2</option><option>sev3</option></select></div></div>
+        <label class="pf">SYMPTOMS / LOGS</label>
+        <textarea id="text" rows="4" placeholder="Paste the error lines, graphs summary, recent deploys…"></textarea>
+        <button class="p" id="declare">DECLARE + TRIAGE</button>
+      </div>
+    </section>
+    <section class="win">
+      <div class="bar"><i class="dot r"></i><i class="dot"></i><i class="dot"></i><span class="pf">incident_history/</span></div>
+      <div class="body"><div id="hist" class="hist hint">Loading…</div></div>
+    </section>
+  </div>
+
+  <section class="win green">
+    <div class="bar"><i class="dot r"></i><i class="dot"></i><i class="dot"></i><span class="pf">triage_console.app</span></div>
+    <div class="body">
+      <div class="score" id="score"></div>
+      <div class="tabs"><button data-t="active" class="on">ACTIVE INCIDENTS</button><button data-t="ask">ASK · MEMORY VS NONE</button></div>
+      <div id="active"></div>
+      <div id="ask" hidden>
+        <div class="hint try pf">ASK WHAT A GENERIC SRE BOT WOULD GUESS, THEN WHAT YOUR TEAM'S MEMORY KNOWS.</div>
+        <input id="q" placeholder="Ask about an outage, a service, a fix…">
+        <div class="chips" id="chips"></div>
+        <button class="p" id="runAsk">ASK BOTH</button>
+        <div class="cmp" id="cmp"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="loading"><div class="pf">LOADING</div><div class="lbar"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+<div id="toast"></div>
+<script src="/static/common.js"></script>
+<script>
+$('#logo').innerHTML=px('siren',5);
+let CAUSES={};let guessLabel='';
+const CC={bad_deploy:'#ffd5a8',config_change:'#e6dcff',capacity:'#bfe3ff',dependency_outage:'#ffc9c2',data_or_schema:'#c4ecab',network:'#fff0a8',unknown:'#e6e1cc'};
+const causeChip=c=>`<span class="chip" style="background:${CC[c]||'#eee'}">${esc(CAUSES[c]||c)}</span>`;
+const sevChip=s=>`<span class="chip ${esc(s)}">${esc(s)}</span>`;
+
+function triageHtml(i){const t=i.triage;if(!t)return '';
+  return `<div style="margin-top:10px">${winHtml('green','triage.txt',
+   `<div class="head"><span class="chip gp">LIKELY CAUSE: ${esc(CAUSES[t.cause]).toUpperCase()} ${t.confidence}%</span></div>
+    <div class="ans"><b>FIRST STEP</b> ${esc(t.first_step)}</div>
+    ${t.avoid?`<div class="ans" style="margin-top:8px"><b>AVOID</b> ${esc(t.avoid)}</div>`:''}
+    ${t.similar&&t.similar.length?`<div class="facts"><div class="pf">SEEN BEFORE</div>${t.similar.map(x=>`<div class="fact">${esc(x)}</div>`).join('')}</div>`:''}
+    <div class="meta" style="margin-top:8px">${esc(t.reason)}</div>${facts(t.facts)}`)}</div>`}
+
+function formHtml(i){const opts=Object.entries(CAUSES).map(([k,v])=>`<option value="${k}">${esc(v)}</option>`).join('');
+  return `<div class="rform" id="rf-${i.id}" hidden>
+   <label class="pf">ACTUAL ROOT CAUSE</label><select class="f-cause"><option value="">choose…</option>${opts}</select>
+   <label class="pf">FIX THAT WORKED</label><input class="f-fix" placeholder="e.g. rolled back to v2.30 (RB-12)">
+   <label class="pf">TRIED, DID NOT WORK</label><input class="f-failed" placeholder="optional">
+   <div class="row"><div><label class="pf">MINUTES TO RESOLVE</label><input class="f-min" type="number" min="1" value="15"></div>
+   ${i.triage?`<div><label class="pf">DID THE FIRST STEP WORK?</label><select class="f-worked"><option value="">not tried</option><option value="true">yes</option><option value="false">no</option></select></div>`:''}</div>
+   <button class="p" data-a="submit" data-id="${i.id}">SAVE POST-MORTEM</button></div>`}
+
+function activeHtml(i){return `<div class="inc"><div>${sevChip(i.severity)}<span class="chip">${esc(i.service)}</span><span class="pf">${esc(i.id)}</span><span class="meta"> opened ${ago(i.saved_at)}</span></div>
+  <div class="t">${esc(i.title)}</div>
+  <details><summary>logs</summary><pre class="logs">${esc(i.text)}</pre></details>
+  ${triageHtml(i)}
+  <div class="acts">${i.triage?'':`<button class="sm" data-a="triage" data-id="${i.id}">Triage from memory</button>`}<button class="sm no" data-a="resolve" data-id="${i.id}">Resolve…</button></div>
+  ${formHtml(i)}</div>`}
+
+function histHtml(i){const r=i.resolution||{};
+  const g=i.correct===true?'<span class="chip right">TRIAGE RIGHT</span>':i.correct===false?'<span class="chip wrong">TRIAGE WRONG</span>':'';
+  return `<div class="h"><div>${sevChip(i.severity)}${causeChip(r.cause)}<span class="chip">${esc(i.service)}</span>${g}<span class="meta">${r.minutes} min</span></div>
+   <div class="t"><span class="pf">${esc(i.id)}</span> ${esc(i.title)}</div>
+   <div class="meta">fix: ${esc(r.fix)}</div>${r.failed?`<div class="meta">did not work: ${esc(r.failed)}</div>`:''}</div>`}
+
+async function refreshScore(){const g=await api('/api/pager/score');const on=g.accuracy==null?0:Math.round(g.accuracy/10);
+  $('#score').innerHTML=`<span class="bob">${px('siren',5)}</span><div><div class="pf">TRIAGE SCORE</div>
+   ${g.accuracy==null?`<div class="meta" style="margin-top:4px">No graded triage yet. Triage an incident, then record its real root cause.</div>`
+   :`<div class="sbar" style="margin-top:6px">${Array.from({length:10},(_,k)=>`<i class="${k<on?'on':''}"></i>`).join('')}</div>`}</div>
+   ${g.accuracy==null?'':`<div class="big">${g.right}/${g.graded} RIGHT</div><div class="meta">${g.accuracy}% root-cause accuracy${g.step_graded?` · first step worked ${g.step_worked}/${g.step_graded}`:''}</div>`}
+   <div class="sp"></div><button class="p" id="triageAll" ${guessLabel?'disabled':''}>${guessLabel||'TRIAGE ALL OPEN'}</button>`;
+  $('#triageAll').onclick=triageAll}
+
+async function loadAll(){
+  if(!Object.keys(CAUSES).length)CAUSES=await api('/api/pager/causes');
+  const items=await api('/api/pager/items');
+  const act=items.filter(i=>i.status==='open'),done=items.filter(i=>i.status==='resolved');
+  const open=new Set([...document.querySelectorAll('.rform:not([hidden])')].map(e=>e.id));
+  $('#active').innerHTML=act.length?act.map(activeHtml).join(''):`<div class="hint" style="text-align:center;padding:14px">${px('check',6)}<br>All clear. Declare an incident, or load the incident history.</div>`;
+  open.forEach(id=>{const f=document.getElementById(id);if(f)f.hidden=false});
+  $('#hist').innerHTML=done.length?done.map(histHtml).join(''):'<span class="hint">No resolved incidents yet. Load the incident history.</span>';
+  refreshScore().catch(()=>{})}
+
+async function triageAll(){if(guessLabel)return;
+  try{const items=(await api('/api/pager/items')).filter(i=>i.status==='open'&&!i.triage);
+    if(!items.length)toast('Every active incident already has a triage.');
+    for(const [n,i] of items.entries()){guessLabel=`TRIAGING ${n+1}/${items.length}`;refreshScore().catch(()=>{});
+      try{await api('/api/pager/items/'+i.id+'/triage',{body:{}});await loadAll()}catch(e){toast('Skipped '+i.id+': '+e.message,true)}}
+  }finally{guessLabel='';refreshScore().catch(()=>{})}}
+
+$('#active').addEventListener('click',async e=>{
+  const b=e.target.closest('button[data-a]');if(!b)return;const id=b.dataset.id,a=b.dataset.a;
+  if(a==='triage')return busy(b,async()=>{await api('/api/pager/items/'+id+'/triage',{body:{}});await loadAll()});
+  if(a==='resolve'){const f=document.getElementById('rf-'+id);f.hidden=!f.hidden;return}
+  if(a==='submit'){const f=document.getElementById('rf-'+id);const cause=f.querySelector('.f-cause').value;
+    if(!cause)return toast('Pick the actual root cause first.',true);
+    const w=f.querySelector('.f-worked')?.value;
+    return busy(b,async()=>{const r=await api('/api/pager/items/'+id+'/resolve',{body:{cause,fix:f.querySelector('.f-fix').value,failed:f.querySelector('.f-failed').value,
+        minutes:parseInt(f.querySelector('.f-min').value||'15',10),suggestion_worked:w===''||w==null?null:w==='true'}});
+      const t=r.triage;toast(t?`Triage said ${CAUSES[t.cause]} (${t.confidence}%). Actual: ${CAUSES[cause]}. ${r.correct?'RIGHT':'WRONG'}. Post-mortem retained.`:'Post-mortem retained in Hindsight.',t&&!r.correct);await loadAll()})}
+});
+$('#declare').onclick=e=>busy(e.target,async()=>{
+  const r=await api('/api/pager/items',{body:{title:$('#title').value,service:$('#service').value,severity:$('#sev').value,text:$('#text').value}});
+  ['#title','#service','#text'].forEach(s=>$(s).value='');toast(r.id+' declared. Triaging from memory…');await loadAll();
+  await api('/api/pager/items/'+r.id+'/triage',{body:{}});await loadAll()});
+$('#load').onclick=e=>busy(e.target,async()=>{toast('Retaining 18 incidents. Hang tight…');const r=await api('/api/pager/demo/load',{});toast('Retained '+r.retained+' incident memories.');await loadAll()});
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('#active').hidden=b.dataset.t!=='active';$('#ask').hidden=b.dataset.t!=='ask'});
+const samples=["Checkout latency spiked right after a deploy. What worked last time?","Redis is evicting keys. What do I do first, and what should I NOT do?","Payments webhooks are failing. Should I roll back?","Which service hurts us most, and why?"];
+$('#chips').innerHTML=samples.map(s=>`<button class="sm">${esc(s)}</button>`).join('');
+$('#chips').onclick=e=>{if(e.target.tagName==='BUTTON')$('#q').value=e.target.textContent};
+$('#runAsk').onclick=e=>busy(e.target,async()=>{const r=await api('/api/pager/ask',{body:{question:$('#q').value}});
+  $('#cmp').innerHTML=winHtml('bad','generic_sre_bot.app',`<div class="head">${px('hex',3)}<span class="pf">NO MEMORY</span></div><div class="ans">${md(r.without_memory)}</div>`)+
+   winHtml('green','pager_memory.app',`<div class="head">${px('coin',4)}<span class="pf">YOUR TEAM'S MEMORY</span></div><div class="ans">${md(r.with_memory.text)}</div>${facts(r.with_memory.facts)}`)});
+loadAll().catch(e=>toast('Backend error: '+e.message,true));
+</script>
+</body>
+</html>

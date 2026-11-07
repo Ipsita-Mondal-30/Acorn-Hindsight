@@ -23,6 +23,9 @@ RETAIN_MISSION = (
 )
 
 
+REFLECT_MISSION = "Answer as a calm, specific personal assistant. Cite the user's own history. Never invent saves."
+
+
 class Memory(Protocol):
     def ensure_bank(self) -> None: ...
     def retain(self, content: str, *, context: str, timestamp: datetime | None, tags: list[str], document_id: str | None) -> None: ...
@@ -47,8 +50,10 @@ def _fact(r: Any) -> dict:
 
 
 class HindsightMemory:
-    def __init__(self, user: str, client: Hindsight | None = None):
+    def __init__(self, user: str, client: Hindsight | None = None, mission: str = BANK_MISSION,
+                 retain_mission: str = RETAIN_MISSION, reflect_mission: str = REFLECT_MISSION):
         self.bank = bank_id(user)
+        self.missions = (mission, retain_mission, reflect_mission)
         self.client = client or Hindsight(base_url=config.HINDSIGHT_BASE_URL, api_key=config.HINDSIGHT_API_KEY)
         # The client keeps an aiohttp session bound to one thread's event loop. FastAPI serves requests on many
         # threads, so every Hindsight call is funnelled through one worker thread.
@@ -62,9 +67,9 @@ class HindsightMemory:
         self._call(self.client.create_bank,
             self.bank,
             name="Acorn",
-            mission=BANK_MISSION,
-            retain_mission=RETAIN_MISSION,
-            reflect_mission="Answer as a calm, specific personal assistant. Cite the user's own history. Never invent saves.",
+            mission=self.missions[0],
+            retain_mission=self.missions[1],
+            reflect_mission=self.missions[2],
             enable_observations=True,
         )
 
