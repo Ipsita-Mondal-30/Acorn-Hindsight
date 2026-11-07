@@ -50,6 +50,17 @@ def resolve(mem: Memory, user: str, item_id: str, status: str, note: str = "") -
     mem.retain(outcome_content(item, status, done["resolved_at"], note),
                context="what the user actually did with something they saved; the strongest signal of what they care about",
                timestamp=_parse(done["resolved_at"]), tags=["outcome", item["kind"], status], document_id=f"outcome-{item_id}")
+    pred = item.get("prediction")
+    if pred:  # grade the ghost and teach memory from its own miss or hit
+        correct = (pred["label"] == "act") == (status == "acted")
+        done = store.update(user, item_id, correct=correct)
+        verdict = "was right" if correct else "was wrong"
+        mem.retain(f"Acorn predicted the user would {pred['label']} the {item['kind']} \"{item['title']}\" "
+                   f"({pred['confidence']}% sure, reason: {pred['reason']}). The user actually {'acted on' if status == 'acted' else 'ignored'} it, "
+                   f"so the prediction {verdict}.",
+                   context="Acorn's own prediction accuracy; learn which signals predict this user's behaviour",
+                   timestamp=_parse(done["resolved_at"]), tags=["prediction", "right" if correct else "wrong"],
+                   document_id=f"prediction-{item_id}")
     return done
 
 
@@ -94,3 +105,48 @@ def ask(mem: Memory, question: str, user: str | None = None) -> dict:
         ctx += "\n" + state_context(user)
     with_mem = mem.reflect(question + "\n\n(Answer in under 100 words. Lead with the verdict, then cite the user's own history.)", context=ctx)
     return {"with_memory": with_mem, "without_memory": llm.answer_without_memory(question)}
+
+
+GHOST_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "prediction": {"type": "string", "enum": ["act", "ignore"]},
+        "confidence": {"type": "integer", "minimum": 50, "maximum": 99},
+        "reason": {"type": "string"},
+    },
+    "required": ["prediction", "confidence", "reason"],
+}
+
+
+def predict(mem: Memory, user: str, item_id: str, force: bool = False) -> dict | None:
+    """Ghost Prediction: before the user acts, guess act/ignore from their own history, and remember the guess."""
+    item = store.get(user, item_id)
+    if not item or item["status"] != "open":
+        return item
+    if item.get("prediction") and not force:
+        return item
+    q = (f"Predict whether the user will ACT on or IGNORE this saved {item['kind']}: \"{item['title']}\" "
+         f"({item['text'][:300]}). Stated reason for saving: {item['why'] or 'none'}. "
+         "Base it on how this user treated similar saves (same kind, deadlines, how fast they acted, "
+         "what they ignored) and on any past Acorn predictions that were wrong. "
+         "Give prediction, an honest confidence 50-99, and a one-sentence reason citing their history.")
+    res = mem.reflect(q, context=f"Today is {datetime.now(timezone.utc):%A %d %B %Y}.", schema=GHOST_SCHEMA, budget="low")
+    out = res.get("structured") or {}
+    label = out.get("prediction")
+    if label not in ("act", "ignore"):
+        return None
+    conf = max(50, min(99, int(out.get("confidence") or 60)))
+    pred = {"label": label, "confidence": conf, "reason": str(out.get("reason", ""))[:300],
+            "made_at": datetime.now(timezone.utc).isoformat()}
+    return store.update(user, item_id, prediction=pred, correct=None)
+
+
+def ghost_score(user: str) -> dict:
+    graded = [i for i in store.list_items(user) if i.get("prediction") and i.get("correct") is not None]
+    right = sum(1 for i in graded if i["correct"])
+    recent = [{"title": i["title"], "predicted": i["prediction"]["label"], "confidence": i["prediction"]["confidence"],
+               "correct": i["correct"]} for i in sorted(graded, key=lambda i: i["resolved_at"] or "", reverse=True)[:5]]
+    return {"graded": len(graded), "right": right,
+            "accuracy": round(100 * right / len(graded)) if graded else None,
+            "pending": sum(1 for i in store.list_items(user) if i.get("prediction") and i["status"] == "open"),
+            "recent": recent}

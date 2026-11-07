@@ -71,3 +71,14 @@ def resolve(user: str, item_id: str, status: str) -> dict | None:
 def clear(user: str) -> None:
     with _lock:
         _dump(user, [])
+
+
+def update(user: str, item_id: str, **fields) -> dict | None:
+    with _lock:
+        items = _load(user)
+        for i in items:
+            if i["id"] == item_id:
+                i.update(fields)
+                _dump(user, items)
+                return i
+    return None

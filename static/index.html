@@ -80,6 +80,11 @@ label.pf{display:block;margin-bottom:6px;color:var(--mute);font-size:9px}
 .fact i{font-style:normal;color:var(--green-d);margin-right:6px}
 .try{margin:0 0 12px;font-size:9px;line-height:1.7}
 .cmp .wide{grid-column:1/-1}
+.ghost{margin:6px 0 2px;font-size:19px}
+.chip.gp{background:#e6dcff}.chip.right{background:#c4ecab}.chip.wrong{background:#ffc9c2}
+.score{display:flex;align-items:center;gap:14px;flex-wrap:wrap;border:3px solid var(--ink);border-radius:10px;background:#f4efff;padding:10px 12px;margin-bottom:16px;box-shadow:3px 3px 0 var(--ink)}
+.sbar{display:flex;gap:3px;border:3px solid var(--ink);padding:3px;background:#fff;width:190px}.sbar i{flex:1;height:14px;background:#e6e1cc}.sbar i.on{background:#8fd35d}
+.score .big{font-family:"Press Start 2P",monospace;font-size:14px}
 .chips{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 14px}
 
 /* pixel loading bar (image 2) */
@@ -139,6 +144,7 @@ body.busy #loading{transform:translateX(-50%)}
   <section class="win green">
     <div class="bar"><i class="dot r"></i><i class="dot"></i><i class="dot"></i><span class="pf">acorn_assistant.app</span></div>
     <div class="body">
+      <div class="score" id="score"></div>
       <div class="tabs"><button data-t="today" class="on">TODAY</button><button data-t="ask">ASK · MEMORY VS NONE</button></div>
       <div id="today"><button class="p" id="runToday">WHAT NEEDS ME TODAY?</button><div id="todayOut" class="ans out"></div></div>
       <div id="ask" hidden>
@@ -164,6 +170,7 @@ sparkle:["...u...","...u...","..uuu..","uulllUU".replace(/U/g,"u"),"..uuu..","..
 coin:["..kkkk..",".kyyyyyk","kyyyooyk","kyyoooyk","kyyoooyk","kyyyooyk",".kyyyyk.","..kkkk.."],
 folder:[".kkkkkk.......","kyyyyyykkkkkk.","kyyyyyyyyyyyyk","kkkkkkkkkkkkkk","kyYyYyYyYyYyYk","kYyYyYyYyYyYyk","kyYyYyYyYyYyYk","kYyYyYyYyYyYyk","kyYyYyYyYyYyYk","kkkkkkkkkkkkkk"],
 flower:["..kyyyk..",".kyyyyyk.","kyyBBByyk","kyBbbbByk","kyBbbbByk","kyyBBByyk",".kyyyyyk.","..kkgkk..","....g....","..gg.g...",".ggg.g...","...g.gg..","....ggg..","....g....","....g...."],
+ghost:["...kkkk...","..kllllk..",".kllllllk.",".klkklkklk",".klkklkklk",".klllllllk",".klllllllk",".klllllllk",".klkllklllk","..k.kk.k.."],
 hex:["...kkkkkk...","..krrrrrrk..",".krrrWWrrrk.","krrrrWWrrrrk","krrrrWWrrrrk","krrrrWWrrrrk","krrrrrrrrrrk","krrrrWWrrrrk",".krrrrrrrrk.","..kkkkkkkk.."]
 };
 function px(name,size=4){const g=SPR[name],h=g.length,w=Math.max(...g.map(r=>r.length));let r='';
@@ -182,19 +189,41 @@ const busy=async(b,fn)=>{b.disabled=true;try{return await fn()}catch(e){toast(e.
 const ago=iso=>{const d=Math.round((Date.now()-new Date(iso))/864e5);return d<=0?'today':d+'d ago'};
 const facts=fs=>fs&&fs.length?`<div class="facts"><div class="pf">MEMORIES USED (${fs.length})</div>${fs.slice(0,8).map(f=>`<div class="fact"><i>${esc(f.type||'fact')}</i>${esc(f.text)}</div>`).join('')}</div>`:'';
 
+const ghostHtml=i=>{const p=i.prediction;if(!p)return '';
+  const guess=`<span class="chip gp">GHOST: ${p.label.toUpperCase()} ${p.confidence}%</span>`;
+  const res=i.correct===true?'<span class="chip right">GHOST WAS RIGHT</span>':i.correct===false?'<span class="chip wrong">GHOST WAS WRONG</span>':'';
+  return `<div class="ghost">${guess}${res}<div class="meta">${esc(p.reason)}</div></div>`};
+async function refreshGhost(){
+  const g=await api('/api/ghost');const on=g.accuracy==null?0:Math.round(g.accuracy/10);
+  $('#score').innerHTML=`<span class="bob">${px('ghost',4)}</span><div><div class="pf">GHOST SCORE</div>
+    ${g.accuracy==null?`<div class="meta" style="margin-top:4px">${g.pending?g.pending+' guess'+(g.pending>1?'es':'')+' waiting. Now act on items.':'No guesses yet. It guesses what you will do, then checks itself.'}</div>`
+    :`<div class="sbar" style="margin-top:6px">${Array.from({length:10},(_,k)=>`<i class="${k<on?'on':''}"></i>`).join('')}</div>`}</div>
+    ${g.accuracy==null?'':`<div class="big">${g.right}/${g.graded} RIGHT</div><div class="meta">${g.accuracy}% accurate${g.pending?' · '+g.pending+' pending':''}</div>`}
+    <div class="sp"></div><button class="p" id="guessAll" ${guessLabel?'disabled':''}>${guessLabel||'GHOST-GUESS ALL OPEN'}</button>`;
+  $('#guessAll').onclick=guessAll}
+let guessLabel='';
+async function guessAll(){if(guessLabel)return;
+  try{const items=(await api('/api/items')).filter(i=>i.status==='open'&&!i.prediction);
+    if(!items.length)toast('Every open item already has a ghost guess.');
+    for(const [n,i] of items.entries()){guessLabel=`GUESSING ${n+1}/${items.length}`;refreshGhost().catch(()=>{});
+      try{await api('/api/items/'+i.id+'/predict',{body:{}});await loadItems()}catch(e){toast('Ghost skipped one: '+e.message,true)}}
+  }finally{guessLabel='';refreshGhost().catch(()=>{})}}
 async function loadItems(){
   const items=await api('/api/items');
   $('#items').innerHTML=items.length?items.map(i=>`<div class="item"><div>${px('folder',3)}</div><div>
     <div class="t">${esc(i.title)}</div>
     <div><span class="chip">${esc(i.kind)}</span><span class="chip ${i.status}">${i.status}</span><span class="meta">saved ${ago(i.saved_at)}</span></div>
-    ${i.why?`<div class="meta">why: ${esc(i.why)}</div>`:''}
-    <div class="acts">${i.status==='open'?`<button class="sm ok" data-a="acted" data-id="${i.id}">I acted on it</button><button class="sm no" data-a="ignored" data-id="${i.id}">Ignoring it</button>`:''}<button class="sm" data-a="brief" data-id="${i.id}">Brief me</button></div>
+    ${i.why?`<div class="meta">why: ${esc(i.why)}</div>`:''}${ghostHtml(i)}
+    <div class="acts">${i.status==='open'?`${i.prediction?'':`<button class="sm" data-a="predict" data-id="${i.id}">Ghost guess</button>`}<button class="sm ok" data-a="acted" data-id="${i.id}">I acted on it</button><button class="sm no" data-a="ignored" data-id="${i.id}">Ignoring it</button>`:''}<button class="sm" data-a="brief" data-id="${i.id}">Brief me</button></div>
     <div id="brief-${i.id}"></div></div></div>`).join(''):`<div class="hint" style="text-align:center;padding:10px">${px('flower',5)}<br>Empty. Save something, or load the demo data.</div>`;
+  refreshGhost().catch(()=>{});
 }
 $('#items').addEventListener('click',async e=>{
   const b=e.target.closest('button');if(!b)return;const id=b.dataset.id,a=b.dataset.a;
+  if(a==='predict')return busy(b,async()=>{await api('/api/items/'+id+'/predict',{body:{}});loadItems()});
   if(a==='brief')return busy(b,async()=>{const r=await api('/api/items/'+id+'/brief');$('#brief-'+id).innerHTML=`<div style="margin-top:10px">${winHtml('green','brief.txt',`<div class="ans">${md(r.text)}</div>${facts(r.facts)}`)}</div>`});
-  await busy(b,async()=>{await api('/api/items/'+id+'/resolve',{body:{status:a}});toast('Remembered: you '+a+' it. Acorn weighs this next time.');loadItems()});
+  await busy(b,async()=>{const r=await api('/api/items/'+id+'/resolve',{body:{status:a}});const p=r.prediction;
+    toast(p?`Ghost guessed ${p.label} (${p.confidence}%). You ${a==='acted'?'acted':'ignored'} it. Ghost was ${r.correct?'RIGHT':'WRONG'}, and it remembers.`:'Remembered: you '+a+' it. Acorn weighs this next time.',p&&!r.correct);loadItems()});
 });
 $('#save').onclick=e=>busy(e.target,async()=>{
   await api('/api/items',{body:{kind:$('#kind').value,title:$('#title').value,text:$('#text').value,why:$('#why').value}});

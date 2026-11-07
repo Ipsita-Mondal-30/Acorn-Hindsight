@@ -85,3 +85,52 @@ def test_ask_passes_authoritative_status_to_memory(client, mem, monkeypatch):
     client.post("/api/ask", json={"question": "what is pending?"})
     ctx = mem.reflections[-1][1]
     assert "OPEN: Pending job (job)" in ctx and "ACTED: Done job (job)" in ctx
+
+
+def _item(client, title="Podcast idea"):
+    return client.post("/api/items", json={"kind": "idea", "title": title, "text": "t"}).json()
+
+
+def test_ghost_predicts_and_stores_before_action(client, mem):
+    it = _item(client)
+    r = client.post(f"/api/items/{it['id']}/predict").json()
+    assert r["prediction"]["label"] == "ignore" and r["prediction"]["confidence"] == 82 and r["correct"] is None
+    assert client.get("/api/ghost").json()["pending"] == 1
+
+
+def test_ghost_wrong_then_right_scores_and_teaches_memory(client, mem):
+    a, b = _item(client, "A"), _item(client, "B")
+    client.post(f"/api/items/{a['id']}/predict"); client.post(f"/api/items/{b['id']}/predict")
+    wrong = client.post(f"/api/items/{a['id']}/resolve", json={"status": "acted"}).json()   # predicted ignore, acted
+    right = client.post(f"/api/items/{b['id']}/resolve", json={"status": "ignored"}).json()  # predicted ignore, ignored
+    assert wrong["correct"] is False and right["correct"] is True
+    s = client.get("/api/ghost").json()
+    assert (s["graded"], s["right"], s["accuracy"], s["pending"]) == (2, 1, 50, 0)
+    fb = [m for m in mem.retained if "prediction" in m["tags"]]
+    assert len(fb) == 2 and "wrong" in fb[0]["tags"] and "predicted the user would ignore" in fb[0]["content"]
+
+
+def test_ghost_clamps_confidence_and_rejects_garbage(client, mem):
+    it = _item(client)
+    mem.structured = {"prediction": "act", "confidence": 250, "reason": "x"}
+    assert client.post(f"/api/items/{it['id']}/predict").json()["prediction"]["confidence"] == 99
+    it2 = _item(client, "C")
+    mem.structured = {"prediction": "maybe", "confidence": 60, "reason": "x"}
+    assert client.post(f"/api/items/{it2['id']}/predict").status_code == 502
+
+
+def test_ghost_only_for_open_items_and_is_not_regenerated(client, mem):
+    it = _item(client)
+    client.post(f"/api/items/{it['id']}/predict")
+    n = len(mem.reflections)
+    client.post(f"/api/items/{it['id']}/predict")
+    assert len(mem.reflections) == n  # cached, no second memory call
+    client.post(f"/api/items/{it['id']}/resolve", json={"status": "ignored"})
+    assert client.post(f"/api/items/{it['id']}/predict").status_code == 409
+    assert client.post("/api/items/nope/predict").status_code == 404
+
+
+def test_unpredicted_items_do_not_affect_score(client):
+    it = _item(client)
+    client.post(f"/api/items/{it['id']}/resolve", json={"status": "acted"})
+    assert client.get("/api/ghost").json()["accuracy"] is None

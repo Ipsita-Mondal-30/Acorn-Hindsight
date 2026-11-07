@@ -15,9 +15,14 @@ class FakeMemory:
         self.retained.append({"content": content, "context": context, "timestamp": timestamp, "tags": list(tags), "document_id": document_id})
     def retain_many(self, items): self.retained.extend(items)
     def recall(self, query, limit=12): return [{"id": "1", "text": "fact", "type": "world", "when": None, "tags": []}]
-    def reflect(self, query, context=None):
+    structured = {"prediction": "ignore", "confidence": 82, "reason": "you ignore these"}
+
+    def reflect(self, query, context=None, schema=None, budget=None):
         self.reflections.append((query, context))
-        return {"text": "reflected", "facts": [{"id": "1", "text": "fact", "type": "experience", "when": None, "tags": []}]}
+        out = {"text": "reflected", "facts": [{"id": "1", "text": "fact", "type": "experience", "when": None, "tags": []}]}
+        if schema:
+            out["structured"] = self.structured
+        return out
     def reset(self): self.retained.clear()
 
 

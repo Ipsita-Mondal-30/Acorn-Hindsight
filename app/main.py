@@ -75,6 +75,24 @@ def brief(item_id: str, mem: Memory = Depends(get_memory)):
     return res
 
 
+@app.post("/api/items/{item_id}/predict")
+def predict(item_id: str, mem: Memory = Depends(get_memory)):
+    item = store.get(USER, item_id)
+    if not item:
+        raise HTTPException(404, "no such item")
+    if item["status"] != "open":
+        raise HTTPException(409, "only open items can be predicted")
+    res = agent.predict(mem, USER, item_id)
+    if not res or not res.get("prediction"):
+        raise HTTPException(502, "the ghost could not decide")
+    return res
+
+
+@app.get("/api/ghost")
+def ghost():
+    return agent.ghost_score(USER)
+
+
 @app.get("/api/today")
 def today(mem: Memory = Depends(get_memory)):
     return agent.today(mem, USER)

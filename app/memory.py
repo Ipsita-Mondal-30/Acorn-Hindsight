@@ -2,6 +2,7 @@
 through recall() / reflect(). One memory bank per user."""
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from typing import Any, Protocol
 
@@ -27,7 +28,7 @@ class Memory(Protocol):
     def retain(self, content: str, *, context: str, timestamp: datetime | None, tags: list[str], document_id: str | None) -> None: ...
     def retain_many(self, items: list[dict[str, Any]]) -> None: ...
     def recall(self, query: str, limit: int = 12) -> list[dict]: ...
-    def reflect(self, query: str, context: str | None = None) -> dict: ...
+    def reflect(self, query: str, context: str | None = None, schema: dict | None = None, budget: str = "mid") -> dict: ...
     def reset(self) -> None: ...
 
 
@@ -49,10 +50,16 @@ class HindsightMemory:
     def __init__(self, user: str, client: Hindsight | None = None):
         self.bank = bank_id(user)
         self.client = client or Hindsight(base_url=config.HINDSIGHT_BASE_URL, api_key=config.HINDSIGHT_API_KEY)
+        # The client keeps an aiohttp session bound to one thread's event loop. FastAPI serves requests on many
+        # threads, so every Hindsight call is funnelled through one worker thread.
+        self._ex = ThreadPoolExecutor(max_workers=1, thread_name_prefix="hindsight")
+
+    def _call(self, fn, *args, **kwargs):
+        return self._ex.submit(fn, *args, **kwargs).result()
 
     def ensure_bank(self) -> None:
         # create_bank is an upsert, so this is safe to call on every start
-        self.client.create_bank(
+        self._call(self.client.create_bank,
             self.bank,
             name="Acorn",
             mission=BANK_MISSION,
@@ -62,28 +69,39 @@ class HindsightMemory:
         )
 
     def retain(self, content, *, context, timestamp=None, tags=(), document_id=None) -> None:
-        self.client.retain(
-            self.bank, content, context=context, timestamp=timestamp or datetime.now(timezone.utc),
-            tags=list(tags), document_id=document_id,
-        )
+        self._call(self.client.retain, self.bank, content, context=context,
+                   timestamp=timestamp or datetime.now(timezone.utc), tags=list(tags), document_id=document_id)
 
     def retain_many(self, items: list[dict[str, Any]]) -> None:
-        self.client.retain_batch(self.bank, items)
+        self._call(self.client.retain_batch, self.bank, items)
 
     def recall(self, query: str, limit: int = 12) -> list[dict]:
-        res = self.client.recall(self.bank, query, max_tokens=2048, budget="mid")
+        res = self._call(self.client.recall, self.bank, query, max_tokens=2048, budget="mid")
         return [_fact(r) for r in (res.results or [])][:limit]
 
-    def reflect(self, query: str, context: str | None = None) -> dict:
-        res = self.client.reflect(self.bank, query, budget="mid", context=context, include_facts=True)
-        return {"text": res.text, "facts": [_fact(f) for f in _based_on(res)]}
+    def reflect(self, query: str, context: str | None = None, schema: dict | None = None, budget: str = "mid") -> dict:
+        res = self._call(self.client.reflect, self.bank, query, budget=budget, context=context,
+                         include_facts=True, response_schema=schema)
+        out = {"text": res.text, "facts": [_fact(f) for f in _based_on(res)]}
+        if schema:
+            out["structured"] = getattr(res, "structured_output", None) or _json_in(res.text)
+        return out
 
     def reset(self) -> None:
         try:
-            self.client.delete_bank(self.bank)
+            self._call(self.client.delete_bank, self.bank)
         except Exception:
             pass
         self.ensure_bank()
+
+
+def _json_in(text: str | None) -> dict | None:
+    import json, re
+    m = re.search(r"\{.*\}", text or "", re.S)
+    try:
+        return json.loads(m.group(0)) if m else None
+    except ValueError:
+        return None
 
 
 def _based_on(res: Any) -> list[Any]:
