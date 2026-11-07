@@ -104,6 +104,23 @@ without memory.
 first, then your track record), **Ghost Predictions** (guess act/ignore with confidence, graded when you click), Ask
 with vs without memory, and an "earlier answer" view that shows how an answer changed after your actions.
 
+## Path to adoption
+Pager Memory is a working prototype, not a finished product. Here is what already supports real use, and what a team would still need.
+
+**Works today**
+- **Self-hostable:** run Hindsight locally with Docker (see "Try it in 2 minutes") so incident data never leaves your network.
+- **Structured post-mortems:** every resolved incident captures cause, the fix that worked, what did *not* work, minutes to resolve and the runbook. That is what the agent learns from.
+- **A built-in trust signal:** triage is graded against the real root cause, so a team can watch the accuracy score before relying on it.
+- **Optional chat front end:** an OpenClaw agent can answer from the same memory (verified, see [docs/openclaw.md](docs/openclaw.md)).
+- **MIT licensed.**
+
+**Roadmap (not built yet)**
+1. **Import real history:** bulk-load existing post-mortems and tickets (Markdown, PagerDuty, Opsgenie or Jira exports) instead of the synthetic seed.
+2. **Live ingestion:** open an incident from a Slack message or a PagerDuty webhook, and post the triage back to the channel.
+3. **Teams and access:** login, one bank per team, role-based access, and an audit log of what the agent recalled.
+4. **Measure it on real incidents:** track triage accuracy and time to resolve before and after adoption, so the case rests on data and not a demo.
+5. **Production hardening:** replace the single-user JSON inbox with a database, add CI, and stream answers to hide the 5 to 25 second Hindsight Cloud latency.
+
 ## Tests
 `.venv/bin/python -m pytest` (28 tests, no network or key needed; they use a fake memory backend and cover retain
 content, grading, clamping, state guards, seed patterns and the single-thread Hindsight client wrapper).
