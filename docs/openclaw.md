@@ -4,8 +4,18 @@ Pager Memory's incident history lives in the Hindsight bank `acorn-demo-pager`. 
 [Hindsight OpenClaw plugin](https://hindsight.vectorize.io/sdks/integrations/openclaw) lets an OpenClaw agent read the
 same bank, so you can ask the agent about an outage in chat and it answers from your team's real history.
 
-> Status: the plugin config and bank were checked against the plugin docs and live Hindsight
-> (`python -m scripts.openclaw_check`). The OpenClaw install itself has not been run on this machine yet.
+> Status (verified on this machine): OpenClaw 2026.11.1 is installed under Node 24, the Hindsight plugin is installed
+> and the gateway logs `initialized (mode: external API, bank: acorn-demo-pager, autoRecall: true, autoRetain: false)`.
+> **Not yet working end to end:** the agent's first model call fails on Groq's free tier (see "Model limit" below).
+
+## Model limit (Groq free tier)
+Groq's free tier caps `openai/gpt-oss-120b` at **8,000 tokens per request**. OpenClaw's prompt (system prompt, tool
+definitions, recalled memory) is about 8,100-8,900 tokens even after slimming, so every turn is rejected with 413 and
+OpenClaw reports it as "Context overflow". Slimming applied so far: workspace injection off, skills block capped,
+tool-heavy plugins disabled, recall-only memory mode, recall budget 250. It got from 8,967 to roughly 8,150-8,250
+tokens, which is still over. Fix: switch OpenClaw to a model with a larger limit (for example a Google Gemini
+free key via `openclaw configure`) or Groq's Dev tier, then restore full capability:
+`openclaw config patch --file openclaw/full-context.patch.json5 && openclaw daemon restart`.
 
 ## 1. Install OpenClaw (needs Node 24.16+)
 ```bash

@@ -1,0 +1,12 @@
+// Undo the Groq-free-tier slimming. Apply AFTER switching OpenClaw to a model with a large per-request limit:
+//   openclaw config patch --file openclaw/full-context.patch.json5 && openclaw daemon restart
+{
+  plugins: { entries: {
+    "hindsight-openclaw": { config: { memoryMode: "hybrid", recallMaxTokens: 1024 } },
+    browser: { enabled: true }, canvas: { enabled: true }, "cua-computer": { enabled: true },
+    github: { enabled: true }, geolocation: { enabled: true }, "talk-voice": { enabled: true },
+    "file-transfer": { enabled: true }
+  } },
+  agents: { entries: { acorn: { contextInjection: "always" } } },
+  skills: { limits: { maxSkillsPromptChars: null } }
+}
