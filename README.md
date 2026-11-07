@@ -15,6 +15,13 @@ Each app here has its own bank, so incident history never mixes with your saved 
 The point of both apps: **memory is the product.** Without it an agent gives generic advice. With it, it cites your own
 history and keeps improving as you use it.
 
+## What is new here
+Incident-triage assistants are a known idea. What is different here is *what* gets remembered and what the agent does with it:
+
+1. **It remembers what failed, not just what happened.** Every post-mortem keeps a separate "tried and did NOT work" clause, so triage can tell you what to *avoid* (for example, "rolling back wasted 20 minutes last time").
+2. **It grades itself and learns from the grade.** Each triage guess is stored before you act, compared with the real root cause afterwards, and the verdict (right or wrong) is retained as its own memory. The running accuracy score is the visible proof that memory is helping.
+3. **One memory engine, two apps.** The same retain, reflect and grade loop powers incident triage and a personal follow-through agent, each with its own bank. An OpenClaw agent can read the same memory too.
+
 ## Know before you start
 - **Demo data is synthetic.** It is written with recurring patterns so learning is visible, so triage on the seeded
   incidents is easy. The accuracy score only means something as you resolve new incidents.
