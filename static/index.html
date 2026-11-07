@@ -4,96 +4,209 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Acorn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#faf8f4;--card:#fff;--ink:#1d1b16;--mute:#6f6a5e;--line:#e6e1d6;--accent:#b4571b;--accent-2:#2f6f4f;--bad:#a23b3b;--soft:#f3efe6}
-@media (prefers-color-scheme:dark){:root{--bg:#16140f;--card:#1f1c16;--ink:#f1ede3;--mute:#a39d8e;--line:#34301f;--accent:#e08a4f;--accent-2:#6fc59a;--bad:#e07a7a;--soft:#27231a}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-header{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line)}
-h1{font-size:18px;margin:0}h1 span{color:var(--accent)}header small{color:var(--mute)}.sp{flex:1}
-button{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:6px 12px;border-radius:8px;cursor:pointer}
-button:hover{border-color:var(--accent)}button.p{background:var(--accent);border-color:var(--accent);color:#fff}button:disabled{opacity:.5;cursor:wait}
-main{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:18px;padding:18px 20px;max-width:1280px;margin:0 auto}
-@media(max-width:860px){main{grid-template-columns:1fr}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
-h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin:0 0 10px}
-textarea,input,select{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;margin-bottom:8px}
-.row{display:flex;gap:8px}.row>*{flex:1}
-.item{border-top:1px solid var(--line);padding:10px 0}.item:first-of-type{border-top:0}
-.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:99px;background:var(--soft);color:var(--mute);margin-right:6px}
-.tag.acted{color:var(--accent-2)}.tag.ignored{color:var(--bad)}
-.item b{display:block}.meta{color:var(--mute);font-size:12px}.acts{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}.acts button{padding:3px 9px;font-size:13px}
-.tabs{display:flex;gap:6px;margin-bottom:12px}.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:700px){.cmp{grid-template-columns:1fr}}
-.col{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--bg)}
-.col.mem{border-color:var(--accent-2)}.col h3{margin:0 0 6px;font-size:13px}.col.mem h3{color:var(--accent-2)}.col.no h3{color:var(--mute)}
-.ans{white-space:pre-wrap}.facts{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
-.fact{font-size:12.5px;color:var(--mute);padding:3px 0}.fact i{color:var(--accent);font-style:normal;margin-right:6px}
-.hint{color:var(--mute);font-size:13px}.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.chips button{font-size:12.5px;padding:3px 9px}
-.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;display:none;max-width:90vw}
+:root{--cream:#fdf6e3;--ink:#1a1a1a;--paper:#fffdf5;--bar:#c9d3e6;--yellow:#f3f08a;--green:#7fb35a;--green-d:#4f8a3a;--sky:#bfe3ff;--red:#ff6b5e;--blue:#3a86ff;--gold:#e8a33d;--mute:#6b6454;--shadow:5px 5px 0 var(--ink)}
+*{box-sizing:border-box}
+html{background:var(--cream)}
+body{margin:0;min-height:100vh;color:var(--ink);font:22px/1.15 "VT323",ui-monospace,monospace;
+  background-color:var(--cream);background-image:radial-gradient(#e9dfc2 1.5px,transparent 1.5px);background-size:22px 22px}
+.px{image-rendering:pixelated;shape-rendering:crispEdges;display:block}
+.pf{font-family:"Press Start 2P",monospace;font-size:11px;letter-spacing:.02em;line-height:1.5}
+
+/* header */
+header{position:relative;display:flex;align-items:center;gap:16px;padding:18px 24px;max-width:1240px;margin:0 auto;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.brand h1{margin:0;font-family:"Press Start 2P",monospace;font-size:26px;text-shadow:3px 3px 0 var(--yellow)}
+.brand h1 span{color:var(--green-d)}
+.tag-line{color:var(--mute);font-size:20px}
+.sp{flex:1}
+.deco{position:absolute;pointer-events:none}
+
+/* chunky buttons */
+button{font:inherit;font-size:20px;color:var(--ink);background:var(--paper);border:3px solid var(--ink);border-radius:8px;padding:5px 12px 4px;cursor:pointer;
+  box-shadow:3px 3px 0 var(--ink);transition:transform .06s,box-shadow .06s}
+button:hover{background:var(--yellow)}
+button:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
+button:disabled{opacity:.55;cursor:progress}
+button.p{background:var(--green);font-family:"Press Start 2P",monospace;font-size:11px;padding:10px 14px;color:#fff;text-shadow:1px 1px 0 var(--ink);letter-spacing:.04em}
+button.p:hover{background:#8fc56a}
+button.sm{font-size:18px;padding:2px 9px 1px;box-shadow:2px 2px 0 var(--ink)}
+button.ok{background:#d7f0c4}button.no{background:#ffd5d0}
+
+/* windows (image 1 chrome) */
+main{display:grid;grid-template-columns:minmax(300px,400px) 1fr;gap:26px;padding:10px 24px 90px;max-width:1240px;margin:0 auto;align-items:start}
+@media(max-width:880px){main{grid-template-columns:1fr}}
+.stack{display:grid;gap:26px}
+.win{background:var(--paper);border:3px solid var(--ink);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
+.win>.bar{display:flex;align-items:center;gap:6px;padding:7px 10px;background:var(--bar);border-bottom:3px solid var(--ink)}
+.dot{width:14px;height:14px;border:2.5px solid var(--ink);border-radius:50%;background:var(--paper)}.dot.r{background:var(--red)}
+.bar .pf{margin-left:8px;font-size:10px}
+.win.green>.bar{background:#b9e0a0}.win.bad>.bar{background:#f6c9c3}
+.body{padding:14px}
+
+/* form */
+textarea,input,select{width:100%;font:inherit;font-size:21px;color:var(--ink);background:#fff;border:3px solid var(--ink);border-radius:8px;padding:6px 9px;margin-bottom:10px;outline:none}
+textarea:focus,input:focus,select:focus{background:#fffbd6}
+.row{display:flex;gap:10px}.row>*{flex:1}
+label.pf{display:block;margin-bottom:6px;color:var(--mute);font-size:9px}
+
+/* inbox files */
+.item{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:12px 0;border-top:3px dashed #d9cfae}
+.item:first-child{border-top:0;padding-top:0}
+.item .t{font-size:23px;line-height:1.05}
+.chip{display:inline-block;font-size:17px;padding:0 8px;border:2.5px solid var(--ink);border-radius:99px;background:var(--sky);margin-right:6px;vertical-align:middle}
+.chip.open{background:var(--yellow)}.chip.acted{background:#c4ecab}.chip.ignored{background:#ffc9c2}
+.meta{color:var(--mute);font-size:19px}
+.acts{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.hint{color:var(--mute)}
+
+/* tabs */
+.tabs{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.tabs button.on{background:var(--ink);color:var(--cream);box-shadow:3px 3px 0 var(--gold)}
+
+/* answers */
+.ans{white-space:pre-wrap;font-size:23px;line-height:1.12}
+.out{margin-top:16px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:18px}
+@media(max-width:760px){.cmp{grid-template-columns:1fr}}
+.cmp .win{box-shadow:5px 5px 0 var(--ink)}
+.head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.facts{margin-top:12px;border-top:3px dashed #d9cfae;padding-top:8px}
+.facts .pf{font-size:9px;color:var(--mute);margin-bottom:6px}
+.fact{font-size:19px;color:#4b4535;padding:2px 0 2px 14px;position:relative;line-height:1.05}
+.fact:before{content:"";position:absolute;left:0;top:7px;width:7px;height:7px;background:var(--blue)}
+.fact i{font-style:normal;color:var(--green-d);margin-right:6px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 14px}
+
+/* pixel loading bar (image 2) */
+#loading{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(140%);transition:transform .2s;z-index:9;
+  background:var(--paper);border:3px solid var(--ink);border-radius:10px;box-shadow:var(--shadow);padding:10px 16px;text-align:center}
+body.busy #loading{transform:translateX(-50%)}
+#loading .pf{margin-bottom:8px;font-size:10px}
+.lbar{display:flex;gap:3px;border:3px solid var(--ink);padding:3px;background:#fff;width:230px}
+.lbar i{flex:1;height:14px;background:#e6e1cc}
+.lbar i{animation:fill 1.2s steps(1) infinite}
+@keyframes fill{0%,100%{background:#e6e1cc}}
+.lbar i:nth-child(1){animation-name:f1}.lbar i:nth-child(2){animation-name:f2}.lbar i:nth-child(3){animation-name:f3}.lbar i:nth-child(4){animation-name:f4}
+.lbar i:nth-child(5){animation-name:f5}.lbar i:nth-child(6){animation-name:f6}.lbar i:nth-child(7){animation-name:f7}.lbar i:nth-child(8){animation-name:f8}
+@keyframes f1{0%{background:#e6e1cc}12%,100%{background:#8fd35d}}@keyframes f2{0%,12%{background:#e6e1cc}25%,100%{background:#8fd35d}}
+@keyframes f3{0%,25%{background:#e6e1cc}37%,100%{background:#8fd35d}}@keyframes f4{0%,37%{background:#e6e1cc}50%,100%{background:#8fd35d}}
+@keyframes f5{0%,50%{background:#e6e1cc}62%,100%{background:#8fd35d}}@keyframes f6{0%,62%{background:#e6e1cc}75%,100%{background:#8fd35d}}
+@keyframes f7{0%,75%{background:#e6e1cc}87%,100%{background:#8fd35d}}@keyframes f8{0%,87%{background:#e6e1cc}99%,100%{background:#8fd35d}}
+
+/* toast (error window, image 1) */
+#toast{position:fixed;top:18px;left:50%;transform:translateX(-50%);z-index:10;display:none;max-width:min(92vw,520px)}
+#toast .win{box-shadow:6px 6px 0 var(--ink)}
+#toast .body{display:flex;gap:12px;align-items:center}
+.bob{animation:bob 1.6s steps(2) infinite}@keyframes bob{50%{transform:translateY(-3px)}}
+.twinkle{animation:tw 1.8s steps(2) infinite}@keyframes tw{50%{opacity:.25}}
 </style>
 </head>
 <body>
 <header>
-  <h1>Acorn<span>.</span></h1><small>remembers what you save, learns what you actually do</small>
+  <div class="brand"><span id="logo" class="bob"></span><h1>ACORN<span>.</span></h1></div>
+  <div class="tag-line">remembers what you save, learns what you actually do</div>
   <div class="sp"></div>
-  <button id="load">Load 5-week demo history</button>
+  <button class="p" id="load">LOAD DEMO DATA</button>
+  <span class="deco twinkle" id="d1" style="left:46%;top:8px"></span>
+  <span class="deco twinkle" id="d2" style="right:250px;top:60px;animation-delay:.6s"></span>
 </header>
+
 <main>
-  <section>
-    <div class="card" style="margin-bottom:14px">
-      <h2>Save something</h2>
-      <textarea id="text" rows="3" placeholder="Paste a link, note, voice transcript, or text from a screenshot"></textarea>
-      <div class="row"><input id="title" placeholder="Title (optional)"><select id="kind"><option>job</option><option>recipe</option><option>article</option><option>product</option><option>idea</option><option>document</option><option selected>other</option></select></div>
-      <input id="why" placeholder="Why are you saving it? (optional)">
-      <button class="p" id="save">Save</button>
-    </div>
-    <div class="card"><h2>Inbox</h2><div id="items" class="hint">Loading…</div></div>
-  </section>
-  <section class="card">
-    <div class="tabs"><button data-t="today" class="on">Today</button><button data-t="ask">Ask · with vs without memory</button></div>
-    <div id="today"><button class="p" id="runToday">What deserves my attention today?</button><div id="todayOut" class="ans" style="margin-top:12px"></div></div>
-    <div id="ask" hidden>
-      <input id="q" placeholder="Ask anything about what you've saved…">
-      <div class="chips" id="chips"></div>
-      <button class="p" id="runAsk">Ask both</button>
-      <div class="cmp" id="cmp" style="margin-top:12px"></div>
+  <div class="stack">
+    <section class="win">
+      <div class="bar"><i class="dot r"></i><i class="dot"></i><i class="dot"></i><span class="pf">save_something.exe</span></div>
+      <div class="body">
+        <label class="pf">WHAT IS IT?</label>
+        <textarea id="text" rows="3" placeholder="Paste a link, note, voice transcript, or text from a screenshot"></textarea>
+        <div class="row"><div><label class="pf">TITLE</label><input id="title" placeholder="optional"></div>
+        <div><label class="pf">TYPE</label><select id="kind"><option>job</option><option>recipe</option><option>article</option><option>product</option><option>idea</option><option>document</option><option selected>other</option></select></div></div>
+        <label class="pf">WHY SAVE IT?</label>
+        <input id="why" placeholder="optional, but helps memory">
+        <button class="p" id="save">SAVE</button>
+      </div>
+    </section>
+    <section class="win">
+      <div class="bar"><i class="dot r"></i><i class="dot"></i><i class="dot"></i><span class="pf">inbox/</span></div>
+      <div class="body"><div id="items" class="hint">Loading…</div></div>
+    </section>
+  </div>
+
+  <section class="win green">
+    <div class="bar"><i class="dot r"></i><i class="dot"></i><i class="dot"></i><span class="pf">acorn_assistant.app</span></div>
+    <div class="body">
+      <div class="tabs"><button data-t="today" class="on">TODAY</button><button data-t="ask">ASK · MEMORY VS NONE</button></div>
+      <div id="today"><button class="p" id="runToday">WHAT NEEDS ME TODAY?</button><div id="todayOut" class="ans out"></div></div>
+      <div id="ask" hidden>
+        <input id="q" placeholder="Ask anything about what you've saved…">
+        <div class="chips" id="chips"></div>
+        <button class="p" id="runAsk">ASK BOTH</button>
+        <div class="cmp" id="cmp"></div>
+      </div>
     </div>
   </section>
 </main>
-<div class="toast" id="toast"></div>
+
+<div id="loading"><div class="pf">LOADING</div><div class="lbar"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+<div id="toast"></div>
+
 <script>
-const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const md=s=>esc(s).replace(/^#{1,6}\s*(.+)$/gm,'<b>$1</b>').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^\s*[*-]\s+/gm,'• ');
-const toast=m=>{const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',3500)};
-async function api(p,o){const r=await fetch(p,o&&{method:o.method||'POST',headers:{'content-type':'application/json'},body:JSON.stringify(o.body||{})});if(!r.ok)throw new Error((await r.text()).slice(0,200));return r.json()}
-const busy=async(b,fn)=>{b.disabled=true;try{return await fn()}catch(e){toast('Error: '+e.message)}finally{b.disabled=false}};
+// ---- pixel sprites: grid strings -> crisp SVG ----
+const PAL={k:'#1a1a1a',B:'#7a4118',b:'#a8602a',t:'#e8b366',w:'#fff3c9',y:'#f3f08a',Y:'#dfd85f',o:'#e8a33d',g:'#5aa13a',G:'#7fcf55',u:'#3a86ff',l:'#9bd0ff',r:'#ff6b5e',W:'#ffffff',s:'#c8ccd4',m:'#7b5ea7'};
+const SPR={
+acorn:[".....kk.....","....kBBk....","..kkkkkkkk..",".kBbBbBbBBk.","kBbBbBbBbBBk","kBBBBBBBBBBk","kkkkkkkkkkkk",".kttttttttk.",".kttwttttttk",".kttttttttk.","..kttttttk..","...kttttk...","....kkkk...."],
+sparkle:["...u...","...u...","..uuu..","uulllUU".replace(/U/g,"u"),"..uuu..","...u...","...u..."],
+coin:["..kkkk..",".kyyyyyk","kyyyooyk","kyyoooyk","kyyoooyk","kyyyooyk",".kyyyyk.","..kkkk.."],
+folder:[".kkkkkk.......","kyyyyyykkkkkk.","kyyyyyyyyyyyyk","kkkkkkkkkkkkkk","kyYyYyYyYyYyYk","kYyYyYyYyYyYyk","kyYyYyYyYyYyYk","kYyYyYyYyYyYyk","kyYyYyYyYyYyYk","kkkkkkkkkkkkkk"],
+flower:["..kyyyk..",".kyyyyyk.","kyyBBByyk","kyBbbbByk","kyBbbbByk","kyyBBByyk",".kyyyyyk.","..kkgkk..","....g....","..gg.g...",".ggg.g...","...g.gg..","....ggg..","....g....","....g...."],
+hex:["...kkkkkk...","..krrrrrrk..",".krrrWWrrrk.","krrrrWWrrrrk","krrrrWWrrrrk","krrrrWWrrrrk","krrrrrrrrrrk","krrrrWWrrrrk",".krrrrrrrrk.","..kkkkkkkk.."]
+};
+function px(name,size=4){const g=SPR[name],h=g.length,w=Math.max(...g.map(r=>r.length));let r='';
+  g.forEach((row,y)=>[...row].forEach((c,x)=>{if(PAL[c])r+=`<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${PAL[c]}"/>`}));
+  return `<svg class="px" width="${w*size}" height="${h*size}" viewBox="0 0 ${w} ${h}">${r}</svg>`}
+const $=s=>document.querySelector(s);
+$('#logo').innerHTML=px('acorn',5);$('#d1').innerHTML=px('sparkle',5);$('#d2').innerHTML=px('sparkle',4);
+
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const md=s=>esc(s).replace(/^#{1,6}\s*(.+)$/gm,'<b>$1</b>').replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^\s*[*-]\s+/gm,'▪ ');
+const winHtml=(cls,title,body)=>`<div class="win ${cls}"><div class="bar"><i class="dot r"></i><i class="dot"></i><i class="dot"></i><span class="pf">${title}</span></div><div class="body">${body}</div></div>`;
+function toast(m,err){const t=$('#toast');t.innerHTML=winHtml(err?'bad':'green',err?'error.exe':'done.app',`<span class="bob">${px(err?'hex':'coin',4)}</span><div class="ans" style="font-size:21px">${err?'<b>ERROR!</b> ':''}${esc(m)}</div>`);t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',4200)}
+let inflight=0;const setBusy=d=>{inflight+=d;document.body.classList.toggle('busy',inflight>0)};
+async function api(p,o){setBusy(1);try{const r=await fetch(p,o&&{method:o.method||'POST',headers:{'content-type':'application/json'},body:JSON.stringify(o.body||{})});if(!r.ok)throw new Error((await r.text()).slice(0,200));return await r.json()}finally{setBusy(-1)}}
+const busy=async(b,fn)=>{b.disabled=true;try{return await fn()}catch(e){toast(e.message,true)}finally{b.disabled=false}};
 const ago=iso=>{const d=Math.round((Date.now()-new Date(iso))/864e5);return d<=0?'today':d+'d ago'};
-const facts=fs=>fs&&fs.length?`<div class="facts"><div class="meta">Hindsight memories this answer is based on (${fs.length})</div>${fs.slice(0,8).map(f=>`<div class="fact"><i>${esc(f.type||'fact')}</i>${esc(f.text)}</div>`).join('')}</div>`:'';
+const facts=fs=>fs&&fs.length?`<div class="facts"><div class="pf">MEMORIES USED (${fs.length})</div>${fs.slice(0,8).map(f=>`<div class="fact"><i>${esc(f.type||'fact')}</i>${esc(f.text)}</div>`).join('')}</div>`:'';
 
 async function loadItems(){
   const items=await api('/api/items');
-  $('#items').innerHTML=items.length?items.map(i=>`<div class="item"><span class="tag">${esc(i.kind)}</span><span class="tag ${i.status}">${i.status}</span><span class="meta">saved ${ago(i.saved_at)}</span>
-    <b>${esc(i.title)}</b>${i.why?`<div class="meta">why: ${esc(i.why)}</div>`:''}
-    <div class="acts">${i.status==='open'?`<button data-a="acted" data-id="${i.id}">I acted on it</button><button data-a="ignored" data-id="${i.id}">Ignoring it</button>`:''}<button data-a="brief" data-id="${i.id}">Brief me</button></div>
-    <div id="brief-${i.id}" class="ans"></div></div>`).join(''):'<span class="hint">Empty. Save something, or load the demo history.</span>';
+  $('#items').innerHTML=items.length?items.map(i=>`<div class="item"><div>${px('folder',3)}</div><div>
+    <div class="t">${esc(i.title)}</div>
+    <div><span class="chip">${esc(i.kind)}</span><span class="chip ${i.status}">${i.status}</span><span class="meta">saved ${ago(i.saved_at)}</span></div>
+    ${i.why?`<div class="meta">why: ${esc(i.why)}</div>`:''}
+    <div class="acts">${i.status==='open'?`<button class="sm ok" data-a="acted" data-id="${i.id}">I acted on it</button><button class="sm no" data-a="ignored" data-id="${i.id}">Ignoring it</button>`:''}<button class="sm" data-a="brief" data-id="${i.id}">Brief me</button></div>
+    <div id="brief-${i.id}"></div></div></div>`).join(''):`<div class="hint" style="text-align:center;padding:10px">${px('flower',5)}<br>Empty. Save something, or load the demo data.</div>`;
 }
 $('#items').addEventListener('click',async e=>{
   const b=e.target.closest('button');if(!b)return;const id=b.dataset.id,a=b.dataset.a;
-  if(a==='brief')return busy(b,async()=>{const r=await api('/api/items/'+id+'/brief');$('#brief-'+id).innerHTML=`<div class="col mem" style="margin-top:8px">${md(r.text)}${facts(r.facts)}</div>`});
-  await busy(b,async()=>{await api('/api/items/'+id+'/resolve',{body:{status:a}});toast('Remembered: you '+a+' it. Acorn will weigh this next time.');loadItems()});
+  if(a==='brief')return busy(b,async()=>{const r=await api('/api/items/'+id+'/brief');$('#brief-'+id).innerHTML=`<div style="margin-top:10px">${winHtml('green','brief.txt',`<div class="ans">${md(r.text)}</div>${facts(r.facts)}`)}</div>`});
+  await busy(b,async()=>{await api('/api/items/'+id+'/resolve',{body:{status:a}});toast('Remembered: you '+a+' it. Acorn weighs this next time.');loadItems()});
 });
 $('#save').onclick=e=>busy(e.target,async()=>{
   await api('/api/items',{body:{kind:$('#kind').value,title:$('#title').value,text:$('#text').value,why:$('#why').value}});
   ['#text','#title','#why'].forEach(s=>$(s).value='');toast('Saved and retained in Hindsight.');loadItems()});
-$('#load').onclick=e=>busy(e.target,async()=>{toast('Retaining 5 weeks of history… this can take a minute.');const r=await api('/api/demo/load',{});toast('Retained '+r.retained+' memories.');loadItems()});
+$('#load').onclick=e=>busy(e.target,async()=>{toast('Retaining 5 weeks of history. Hang tight…');const r=await api('/api/demo/load',{});toast('Retained '+r.retained+' memories.');loadItems()});
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));$('#today').hidden=b.dataset.t!=='today';$('#ask').hidden=b.dataset.t!=='ask'});
 $('#runToday').onclick=e=>busy(e.target,async()=>{const r=await api('/api/today');$('#todayOut').innerHTML=md(r.text)+facts(r.facts)});
 const samples=["Should I apply to the Hexagon Pay job or skip it?","Which of my saved recipes will I actually cook?","Should I buy the vertical mouse?","What do I usually do with long articles I save?"];
-$('#chips').innerHTML=samples.map(s=>`<button>${esc(s)}</button>`).join('');
+$('#chips').innerHTML=samples.map(s=>`<button class="sm">${esc(s)}</button>`).join('');
 $('#chips').onclick=e=>{if(e.target.tagName==='BUTTON')$('#q').value=e.target.textContent};
 $('#runAsk').onclick=e=>busy(e.target,async()=>{const r=await api('/api/ask',{body:{question:$('#q').value}});
-  $('#cmp').innerHTML=`<div class="col no"><h3>Without memory</h3><div class="ans">${md(r.without_memory)}</div></div><div class="col mem"><h3>With Hindsight memory</h3><div class="ans">${md(r.with_memory.text)}</div>${facts(r.with_memory.facts)}</div>`});
-loadItems().catch(e=>toast('Backend error: '+e.message));
+  $('#cmp').innerHTML=
+   winHtml('bad','no_memory.app',`<div class="head">${px('hex',3)}<span class="pf">NO MEMORY</span></div><div class="ans">${md(r.without_memory)}</div>`)+
+   winHtml('green','hindsight.app',`<div class="head">${px('coin',4)}<span class="pf">WITH HINDSIGHT</span></div><div class="ans">${md(r.with_memory.text)}</div>${facts(r.with_memory.facts)}`)});
+loadItems().catch(e=>toast('Backend error: '+e.message,true));
 </script>
 </body>
 </html>
